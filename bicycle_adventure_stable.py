@@ -797,6 +797,10 @@ class Game:
         self.soul_animation_start_time = 0
         self.soul_animation_duration = 1500  # 1.5 seconds soul effect
 
+
+
+
+
         self.game_over_timer = None
 
         # At Game init:
@@ -845,6 +849,8 @@ class Game:
         self.smoke_particles.update()
         for smoke in self.smoke_particles:
             surface.blit(smoke.image, (smoke.rect.x - camera_offset_x + shake_offset_x, smoke.rect.y + shake_offset_y))
+
+
 
 
         for platform in self.platforms:
@@ -1074,6 +1080,10 @@ class Game:
         self.particle_group.update()
         self.smoke_particles.update()
 
+        
+
+
+
         # Winning condition: reach finish line with zero hits
         if self.finish_line and self.player.rect.colliderect(self.finish_line.rect):
             if self.player.dizzy_hits == 0:
@@ -1085,6 +1095,8 @@ class Game:
                         self.fade_out_music()
                     if win_sound:
                         win_sound.play()
+                return  # <<< ADD THIS RETURN HERE
+
 
         # Draw everything including smoke particles
             self.smoke_particles.draw(screen)  # Ensure smoke particles are drawn
@@ -1093,7 +1105,12 @@ class Game:
         if self.flash_red_screen:
             elapsed = now - self.flash_start_time
             blink_interval = 250  # milliseconds
-            blink_phase = (elapsed // blink_interval) % 2
+            total_blinks = 2
+            blink_cycle_duration = blink_interval * 2  # 500ms per full blink (on + off)
+            total_flash_duration = blink_cycle_duration * total_blinks  # 1000ms for 2 blinks
+
+            blink_phase = (elapsed // blink_interval) % 2  # 0=red on, 1=red off
+
         # Update ghost and other enemies even during flash
             self.player.update(self.platforms)
             self.fire_effects.update()
@@ -1117,17 +1134,19 @@ class Game:
             # Draw red overlay on top on blink phase
             if blink_phase == 0:
                 red_overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-                red_overlay.set_alpha(150)  # adjust transparency here
+                red_overlay.set_alpha(150)
                 red_overlay.fill(RED)
                 screen.blit(red_overlay, (0, 0))
 
             pygame.display.flip()
 
-            if elapsed > 3000:  # Flash for 3 seconds total
+            if elapsed > total_flash_duration:
                 self.flash_red_screen = False
                 self.zooming_in = True
                 self.zoom_start_time = now
-            return  # skip rest for this frame
+            return
+        
+
         # 2) Handle zoom in effect
         if self.zooming_in:
             elapsed = now - self.zoom_start_time
@@ -1376,10 +1395,14 @@ class Game:
             screen.blit(enemy.image, (enemy.rect.x - camera_offset_x + shake_offset_x, enemy.rect.y + shake_offset_y))
         if hasattr(self, 'ghost') and self.ghost is not None:
             screen.blit(self.ghost.image, (self.ghost.rect.x - camera_offset_x + shake_offset_x, self.ghost.rect.y + shake_offset_y))
+        
         # Draw smoke particles
         for smoke in self.smoke_particles:  # SMOKE PARTICLE ADDITION START
             screen.blit(smoke.image, (smoke.rect.x - camera_offset_x, smoke.rect.y))  # Draw smoke
-    # Draw the rest of the elements (player, enemies, etc.)
+
+
+
+        # Draw the rest of the elements (player, enemies, etc.)
         screen.blit(self.player.image, (self.player.rect.x - camera_offset_x + shake_offset_x, self.player.rect.y + shake_offset_y))
         if self.finish_line:
             screen.blit(self.finish_line.image, (self.finish_line.rect.x - camera_offset_x + shake_offset_x, self.finish_line.rect.y + shake_offset_y))
